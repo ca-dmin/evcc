@@ -1,0 +1,54 @@
+template: teslamate
+products:
+  - brand: Tesla
+requirements:
+  description:
+    de: |
+      - [Teslamate](https://github.com/adriankumpf/teslamate) muss eingerichtet sein
+      - [TeslaMateApi](https://github.com/tobiasehlert/teslamateapi) muss eingerichtet sein
+
+    en: |
+      - [Teslamate](https://github.com/adriankumpf/teslamate) must be set up
+      - [TeslaMateApi](https://github.com/tobiasehlert/teslamateapi) must be set up
+params:
+  - name: title
+  - name: apiuri
+    required: true
+    help:
+      en: "URL of your running TeslaMateApi instance without /api/v1"
+      de: "URL der laufenden TeslaMateApi Installation ohne /api/v1"
+  - name: vin
+    example: W...
+  - name: capacity
+  - name: phases
+    advanced: true
+  - name: icon
+    default: car
+    advanced: true
+  - name: cache
+    default: 15m
+    advanced: true
+    valuetype: duration
+  - preset: vehicleidentify
+render: |
+  type: teslamate
+  {{- if ne .title "" }}
+  title: {{ .title }}
+  {{- end }}
+  {{- if ne .icon "" }}
+  icon: {{ .icon }}
+  {{- end }}
+  capacity: {{ .capacity }}
+  {{- if ne .phases "" }}
+  phases: {{ .phases }}
+  {{- end }}
+  {{- if ne .vin "" }}
+  vin: {{ .vin }}
+  {{- end }} 
+  {{- if ne .apiuri "" }}
+  apiuri: {{ .apiuri }} # mandatory url where teslamateapi is running
+  {{- end }}
+  {{- if ne .cache "" }}
+  cache: {{ .cache }}
+  {{- end }}
+  {{ include "vehicle-identify" . }}
