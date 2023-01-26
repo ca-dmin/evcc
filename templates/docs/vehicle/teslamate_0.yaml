@@ -1,6 +1,15 @@
 product:
   brand: Tesla
+  description: via TeslaMateApi
+
 description: |
+  Abfrage fuer Tesla via TeslaMateApi.
+
+  Vorteile gegenueber Direkt-Zugriff auf die Tesla-API
+  - Token sind bei evcc nicht noetig (nur bei Teslamate)
+  - Fahrzeug wird nicht durch evcc geweckt, daher niedrigers Polling-nd Cache-Intervall moeglich
+
+  Nachteile:
   - [Teslamate](https://github.com/adriankumpf/teslamate) muss eingerichtet sein
   - [TeslaMateApi](https://github.com/tobiasehlert/teslamateapi) muss eingerichtet sein
 
