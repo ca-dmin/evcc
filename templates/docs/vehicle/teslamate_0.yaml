@@ -7,7 +7,7 @@ description: |
 
   Vorteile gegenueber Direkt-Zugriff auf die Tesla-API
   - Token sind bei evcc nicht noetig (nur bei Teslamate)
-  - Fahrzeug wird nicht durch evcc geweckt, daher niedrigers Polling-nd Cache-Intervall moeglich
+  - Fahrzeug wird nicht durch evcc geweckt, daher niedrigeres Polling- und Cache-Intervall moeglich
 
   Nachteile:
   - [Teslamate](https://github.com/adriankumpf/teslamate) muss eingerichtet sein
