@@ -63,6 +63,7 @@ type Site struct {
 	gridMeter     api.Meter   // Grid usage meter
 	pvMeters      []api.Meter // PV generation meters
 	batteryMeters []api.Meter // Battery charging meters
+	auxMeters     []api.Meter // Auxiliary meters
 
 	tariffs     tariff.Tariffs           // Tariff
 	loadpoints  []*Loadpoint             // Loadpoints
@@ -81,11 +82,12 @@ type Site struct {
 
 // MetersConfig contains the loadpoint's meter configuration
 type MetersConfig struct {
-	GridMeterRef     string   `mapstructure:"grid"`      // Grid usage meter
-	PVMeterRef       string   `mapstructure:"pv"`        // PV meter
-	PVMetersRef      []string `mapstructure:"pvs"`       // Multiple PV meters
-	BatteryMeterRef  string   `mapstructure:"battery"`   // Battery charging meter
-	BatteryMetersRef []string `mapstructure:"batteries"` // Multiple Battery charging meters
+	GridMeterRef      string   `mapstructure:"grid"`      // Grid usage meter
+	PVMetersRef       []string `mapstructure:"pv"`        // PV meter
+	PVMetersRef_      []string `mapstructure:"pvs"`       // TODO deprecated
+	BatteryMetersRef  []string `mapstructure:"battery"`   // Battery charging meter
+	BatteryMetersRef_ []string `mapstructure:"batteries"` // TODO deprecated
+	AuxMetersRef      []string `mapstructure:"aux"`       // Auxiliary meters
 }
 
 // NewSiteFromConfig creates a new site
@@ -107,21 +109,6 @@ func NewSiteFromConfig(
 	site.tariffs = tariffs
 	site.coordinator = coordinator.New(log, vehicles)
 	site.savings = NewSavings(tariffs)
-
-	// migrate session log
-	if serverdb.Instance != nil {
-		var err error
-		// TODO deprecate
-		if table := "transactions"; serverdb.Instance.Migrator().HasTable(table) {
-			err = serverdb.Instance.Migrator().RenameTable(table, new(db.Session))
-		}
-		if err == nil {
-			err = serverdb.Instance.AutoMigrate(new(db.Session))
-		}
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	// upload telemetry on shutdown
 	if telemetry.Enabled() {
@@ -157,7 +144,7 @@ func NewSiteFromConfig(
 	}
 
 	// multiple pv
-	for _, ref := range site.Meters.PVMetersRef {
+	for _, ref := range append(site.Meters.PVMetersRef, site.Meters.PVMetersRef_...) {
 		pv, err := cp.Meter(ref)
 		if err != nil {
 			return nil, err
@@ -165,20 +152,8 @@ func NewSiteFromConfig(
 		site.pvMeters = append(site.pvMeters, pv)
 	}
 
-	// single pv
-	if site.Meters.PVMeterRef != "" {
-		if len(site.pvMeters) > 0 {
-			return nil, errors.New("cannot have pv and pvs both")
-		}
-		pv, err := cp.Meter(site.Meters.PVMeterRef)
-		if err != nil {
-			return nil, err
-		}
-		site.pvMeters = append(site.pvMeters, pv)
-	}
-
 	// multiple batteries
-	for _, ref := range site.Meters.BatteryMetersRef {
+	for _, ref := range append(site.Meters.BatteryMetersRef, site.Meters.BatteryMetersRef_...) {
 		battery, err := cp.Meter(ref)
 		if err != nil {
 			return nil, err
@@ -186,16 +161,13 @@ func NewSiteFromConfig(
 		site.batteryMeters = append(site.batteryMeters, battery)
 	}
 
-	// single battery
-	if site.Meters.BatteryMeterRef != "" {
-		if len(site.batteryMeters) > 0 {
-			return nil, errors.New("cannot have battery and batteries both")
-		}
-		battery, err := cp.Meter(site.Meters.BatteryMeterRef)
+	// auxiliary meters
+	for _, ref := range site.Meters.AuxMetersRef {
+		meter, err := cp.Meter(ref)
 		if err != nil {
 			return nil, err
 		}
-		site.batteryMeters = append(site.batteryMeters, battery)
+		site.auxMeters = append(site.auxMeters, meter)
 	}
 
 	// configure meter from references
@@ -551,6 +523,19 @@ func (site *Site) sitePower(totalChargePower float64) (float64, error) {
 	}
 
 	sitePower := sitePower(site.log, site.MaxGridSupplyWhileBatteryCharging, site.gridPower, batteryPower, site.ResidualPower)
+
+	// deduct smart loads
+	var auxPower float64
+	for i, meter := range site.auxMeters {
+		if power, err := meter.CurrentPower(); err != nil {
+			site.log.ERROR.Printf("aux meter %d: %v", i, err)
+		} else {
+			auxPower += power
+			site.log.DEBUG.Printf("aux power %d: %.0fW", i, power)
+		}
+	}
+	site.publish("auxPower", auxPower)
+	sitePower -= auxPower
 
 	site.log.DEBUG.Printf("site power: %.0fW", sitePower)
 
