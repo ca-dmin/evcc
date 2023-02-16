@@ -28,7 +28,6 @@ params:
   - name: cache
     default: 15m
     advanced: true
-    valuetype: duration
   - preset: vehicleidentify
 render: |
   type: teslamate
