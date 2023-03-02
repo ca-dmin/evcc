@@ -16,8 +16,6 @@ import (
 type Template struct {
 	TemplateDefinition
 
-	ConfigDefaults ConfigDefaults `json:"-"`
-
 	title  string
 	titles []string
 }
@@ -31,11 +29,7 @@ func (t *Template) GuidedSetupEnabled() bool {
 // UpdateParamWithDefaults adds default values to specific param name entries
 func (t *Template) UpdateParamsWithDefaults() error {
 	for i, p := range t.Params {
-		if p.Type == "" || (p.Type != "" && !slices.Contains(ValidParamTypes, p.Type)) {
-			t.Params[i].Type = ParamTypeString
-		}
-
-		if index, resultMapItem := t.ConfigDefaults.ParamByName(strings.ToLower(p.Name)); index > -1 {
+		if index, resultMapItem := ConfigDefaults.ParamByName(strings.ToLower(p.Name)); index > -1 {
 			t.Params[i].OverwriteProperties(resultMapItem)
 		}
 	}
@@ -71,10 +65,6 @@ func (t *Template) Validate() error {
 					return fmt.Errorf("invalid modbus choice '%s' in template %s", c, t.Template)
 				}
 			}
-		}
-
-		if p.Type != "" && !slices.Contains(ValidParamTypes, p.Type) {
-			return fmt.Errorf("invalid value type '%s' in template %s", p.Type, t.Template)
 		}
 	}
 
@@ -123,7 +113,7 @@ func (t *Template) ResolvePresets() error {
 	t.Params = []Param{}
 	for _, p := range currentParams {
 		if p.Preset != "" {
-			base, ok := t.ConfigDefaults.Presets[p.Preset]
+			base, ok := ConfigDefaults.Presets[p.Preset]
 			if !ok {
 				return fmt.Errorf("could not find preset definition: %s", p.Preset)
 			}
@@ -150,7 +140,7 @@ func (t *Template) ResolveGroup() error {
 		return nil
 	}
 
-	_, ok := t.ConfigDefaults.DeviceGroups[t.Group]
+	_, ok := ConfigDefaults.DeviceGroups[t.Group]
 	if !ok {
 		return fmt.Errorf("could not find devicegroup definition: %s", t.Group)
 	}
@@ -160,7 +150,7 @@ func (t *Template) ResolveGroup() error {
 
 // return the language specific group title
 func (t *Template) GroupTitle(lang string) string {
-	tl := t.ConfigDefaults.DeviceGroups[t.Group]
+	tl := ConfigDefaults.DeviceGroups[t.Group]
 	return tl.String(lang)
 }
 
@@ -215,7 +205,7 @@ func (t *Template) ModbusChoices() []string {
 //go:embed proxy.tpl
 var proxyTmpl string
 
-// RenderProxy renders the proxy template
+// RenderProxyWithValues renders the proxy template
 func (t *Template) RenderProxyWithValues(values map[string]interface{}, lang string) ([]byte, error) {
 	tmpl, err := template.New("yaml").Funcs(template.FuncMap(sprig.FuncMap())).Parse(proxyTmpl)
 	if err != nil {
@@ -231,7 +221,7 @@ func (t *Template) RenderProxyWithValues(values map[string]interface{}, lang str
 			}
 
 			switch p.Type {
-			case ParamTypeStringList:
+			case TypeStringList:
 				for _, e := range v.([]string) {
 					t.Params[index].Values = append(p.Values, yamlQuote(e))
 				}
@@ -251,7 +241,7 @@ func (t *Template) RenderProxyWithValues(values map[string]interface{}, lang str
 	for _, param := range t.Params {
 		if !param.IsRequired() {
 			switch param.Type {
-			case ParamTypeStringList:
+			case TypeStringList:
 				if len(param.Values) == 0 {
 					continue
 				}
@@ -284,13 +274,6 @@ func (t *Template) RenderResult(renderMode string, other map[string]interface{})
 	}
 
 	t.ModbusValues(renderMode, values)
-
-	// add the common templates
-	for _, v := range t.ConfigDefaults.Presets {
-		if !strings.Contains(t.Render, v.Render) {
-			t.Render += "\n" + v.Render
-		}
-	}
 
 	res := make(map[string]interface{})
 
@@ -358,7 +341,10 @@ func (t *Template) RenderResult(renderMode string, other map[string]interface{})
 		},
 	}
 
-	tmpl, err := tmpl.Funcs(template.FuncMap(sprig.FuncMap())).Funcs(funcMap).Parse(t.Render)
+	tmpl, err := baseTmpl.Clone()
+	if err == nil {
+		tmpl, err = tmpl.Funcs(sprig.FuncMap()).Funcs(funcMap).Parse(t.Render)
+	}
 	if err != nil {
 		return nil, res, err
 	}

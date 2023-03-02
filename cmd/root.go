@@ -21,6 +21,9 @@ import (
 	"github.com/evcc-io/evcc/util/pipe"
 	"github.com/evcc-io/evcc/util/sponsor"
 	"github.com/evcc-io/evcc/util/telemetry"
+	"github.com/fatih/structs"
+	"github.com/jeremywohl/flatten"
+	"golang.org/x/exp/maps"
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -34,7 +37,8 @@ var (
 	log     = util.NewLogger("main")
 	cfgFile string
 
-	ignoreErrors = []string{"warn", "error"}        // don't add to cache
+	ignoreEmpty  = ""                               // ignore empty keys
+	ignoreErrors = []string{"warn", "error"}        // ignore errors
 	ignoreMqtt   = []string{"auth", "releaseNotes"} // excessive size may crash certain brokers
 )
 
@@ -88,6 +92,12 @@ func initConfig() {
 	viper.SetEnvPrefix("evcc")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv() // read in environment variables that match
+
+	// register all known config keys
+	flat, _ := flatten.Flatten(structs.Map(conf), "", flatten.DotStyle)
+	for _, v := range maps.Keys(flat) {
+		_ = viper.BindEnv(v)
+	}
 
 	// print version
 	util.LogLevel("info", nil)
@@ -143,7 +153,7 @@ func runRoot(cmd *cobra.Command, args []string) {
 	}
 
 	// publish to UI
-	go socketHub.Run(tee.Attach(), cache)
+	go socketHub.Run(pipe.NewDropper(ignoreEmpty).Pipe(tee.Attach()), cache)
 
 	// setup values channel
 	valueChan := make(chan util.Param)
@@ -183,13 +193,13 @@ func runRoot(cmd *cobra.Command, args []string) {
 
 	// setup database
 	if err == nil && conf.Influx.URL != "" {
-		configureInflux(conf.Influx, site, tee.Attach())
+		configureInflux(conf.Influx, site, pipe.NewDropper(append(ignoreErrors, ignoreEmpty)...).Pipe(tee.Attach()))
 	}
 
 	// setup mqtt publisher
 	if err == nil && conf.Mqtt.Broker != "" {
 		publisher := server.NewMQTT(strings.Trim(conf.Mqtt.Topic, "/"))
-		go publisher.Run(site, pipe.NewDropper(ignoreMqtt...).Pipe(tee.Attach()))
+		go publisher.Run(site, pipe.NewDropper(append(ignoreMqtt, ignoreEmpty)...).Pipe(tee.Attach()))
 	}
 
 	// announce on mDNS
@@ -252,6 +262,9 @@ func runRoot(cmd *cobra.Command, args []string) {
 		// expose sponsor to UI
 		if sponsor.Subject != "" {
 			valueChan <- util.Param{Key: "sponsor", Val: sponsor.Subject}
+			if validDuration := time.Until(sponsor.ExpiresAt); validDuration < 30*24*time.Hour {
+				valueChan <- util.Param{Key: "sponsorTokenExpires", Val: validDuration}
+			}
 		}
 
 		// allow web access for vehicles

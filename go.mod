@@ -58,15 +58,16 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/koron/go-ssdp v0.0.3
 	github.com/korylprince/ipnetgen v1.0.1
+	github.com/kr/pretty v0.3.0
 	github.com/libp2p/zeroconf/v2 v2.2.0
-	github.com/lorenzodonini/ocpp-go v0.16.1-0.20220927200117-d4afed542168
+	github.com/lorenzodonini/ocpp-go v0.16.1-0.20230224180512-0195c3faf41a
 	github.com/lunixbochs/struc v0.0.0-20200707160740-784aaebc1d40
 	github.com/mabunixda/wattpilot v1.1.1
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mergermarket/go-pkcs7 v0.0.0-20170926155232-153b18ea13c9
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/mlnoga/rct v0.1.2-0.20230215163419-4242ff35a8ce
+	github.com/mlnoga/rct v0.1.2-0.20230227143934-71af1fb7dfa1
 	github.com/muka/go-bluetooth v0.0.0-20220219050759-674a63b8741a
 	github.com/mxschmitt/golang-combinations v1.1.0
 	github.com/nicksnyder/go-i18n/v2 v2.2.1
@@ -144,6 +145,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
