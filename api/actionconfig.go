@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/fatih/structs"
+	"github.com/imdario/mergo"
+	"github.com/jinzhu/copier"
 )
 
 // ActionConfig defines an action to take on event
@@ -21,22 +23,14 @@ type ActionConfig struct {
 // Merge merges all non-nil properties of the additional config into the base config.
 // The receiver's config remains immutable.
 func (a ActionConfig) Merge(m ActionConfig) ActionConfig {
-	if m.Mode != nil {
-		a.Mode = m.Mode
+	var res ActionConfig
+	if err := copier.Copy(&res, a); err != nil {
+		panic(err)
 	}
-	if m.MinCurrent != nil {
-		a.MinCurrent = m.MinCurrent
+	if err := mergo.MergeWithOverwrite(&res, m); err != nil {
+		panic(err)
 	}
-	if m.MaxCurrent != nil {
-		a.MaxCurrent = m.MaxCurrent
-	}
-	if m.MinSoc != nil {
-		a.MinSoc = m.MinSoc
-	}
-	if m.TargetSoc != nil {
-		a.TargetSoc = m.TargetSoc
-	}
-	return a
+	return res
 }
 
 // String implements Stringer and returns the ActionConfig as comma-separated key:value string

@@ -30,6 +30,10 @@ func NewTapoFromConfig(other map[string]interface{}) (api.Charger, error) {
 		return nil, err
 	}
 
+	if cc.User == "" || cc.Password == "" {
+		return nil, api.ErrMissingCredentials
+	}
+
 	return NewTapo(cc.embed, cc.URI, cc.User, cc.Password, cc.StandbyPower)
 }
 
@@ -69,6 +73,7 @@ func (c *Tapo) MaxCurrent(current int64) error {
 	return nil
 }
 
+var _ api.Meter = (*Tapo)(nil)
 var _ api.ChargeRater = (*Tapo)(nil)
 
 // ChargedEnergy implements the api.ChargeRater interface

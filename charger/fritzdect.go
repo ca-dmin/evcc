@@ -34,6 +34,10 @@ func NewFritzDECTFromConfig(other map[string]interface{}) (api.Charger, error) {
 		return nil, err
 	}
 
+	if cc.User == "" || cc.Password == "" {
+		return nil, api.ErrMissingCredentials
+	}
+
 	return NewFritzDECT(cc.embed, cc.URI, cc.AIN, cc.User, cc.Password, cc.StandbyPower)
 }
 
@@ -104,6 +108,7 @@ func (c *FritzDECT) MaxCurrent(current int64) error {
 	return nil
 }
 
+var _ api.Meter = (*FritzDECT)(nil)
 var _ api.MeterEnergy = (*FritzDECT)(nil)
 
 // TotalEnergy implements the api.MeterEnergy interface
