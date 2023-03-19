@@ -39,6 +39,9 @@ const (
 	pvEnable  = "enable"
 	pvDisable = "disable"
 
+	guardTimer  = "guard"
+	guardEnable = "enable"
+
 	phaseTimer   = "phase"
 	phaseScale1p = "scale1p"
 	phaseScale3p = "scale3p"
@@ -130,9 +133,10 @@ type Loadpoint struct {
 	vehicleDetectTicker      *clock.Ticker
 	vehicleIdentifier        string
 
-	charger     api.Charger
-	chargeTimer api.ChargeTimer
-	chargeRater api.ChargeRater
+	charger          api.Charger
+	chargeTimer      api.ChargeTimer
+	chargeRater      api.ChargeRater
+	chargedAtStartup float64 // session energy at startup
 
 	chargeMeter    api.Meter   // Charger usage meter
 	vehicle        api.Vehicle // Currently active vehicle
@@ -345,6 +349,11 @@ func (lp *Loadpoint) configureChargerType(charger api.Charger) {
 	// (https://github.com/evcc-io/evcc/issues/2469)
 	if rt, ok := charger.(api.ChargeRater); ok && integrated {
 		lp.chargeRater = rt
+
+		// when restarting in the middle of charging session, use this as negative offset
+		if f, err := rt.ChargedEnergy(); err == nil {
+			lp.chargedAtStartup = f
+		}
 	} else {
 		rt := wrapper.NewChargeRater(lp.log, lp.chargeMeter)
 		_ = lp.bus.Subscribe(evChargePower, rt.SetChargePower)
@@ -462,6 +471,9 @@ func (lp *Loadpoint) evVehicleDisconnectHandler() {
 	lp.publish("chargedEnergy", lp.getChargedEnergy())
 	lp.publish("connectedDuration", lp.clock.Since(lp.connectedTime))
 
+	// forget startup energy offset
+	lp.chargedAtStartup = 0
+
 	// remove charger vehicle id and stop potential detection
 	lp.setVehicleIdentifier("")
 	lp.stopVehicleDetection()
@@ -562,6 +574,7 @@ func (lp *Loadpoint) Prepare(uiChan chan<- util.Param, pushChan chan<- push.Even
 	lp.publish(phasesActive, lp.activePhases())
 	lp.publishTimer(phaseTimer, 0, timerInactive)
 	lp.publishTimer(pvTimer, 0, timerInactive)
+	lp.publishTimer(guardTimer, 0, timerInactive)
 
 	// charger features
 	for _, f := range []api.Feature{api.IntegratedDevice} {
@@ -652,9 +665,10 @@ func (lp *Loadpoint) setLimit(chargeCurrent float64, force bool) error {
 	// set enabled/disabled
 	if enabled := chargeCurrent >= lp.GetMinCurrent(); enabled != lp.enabled {
 		if remaining := (lp.GuardDuration - lp.clock.Since(lp.guardUpdated)).Truncate(time.Second); remaining > 0 && !force {
-			lp.log.DEBUG.Printf("charger %s: contactor delay %v", status[enabled], remaining)
+			lp.publishTimer(guardTimer, lp.GuardDuration, guardEnable)
 			return nil
 		}
+		lp.elapseGuard()
 
 		// remote stop
 		// TODO https://github.com/evcc-io/evcc/discussions/1929
@@ -877,9 +891,9 @@ func (lp *Loadpoint) elapsePVTimer() {
 	lp.log.DEBUG.Printf("pv timer elapse")
 
 	lp.pvTimer = elapsed
-	lp.guardUpdated = elapsed
-
 	lp.publishTimer(pvTimer, 0, timerInactive)
+
+	lp.elapseGuard()
 }
 
 // resetPVTimer resets the pv enable/disable timer to disabled state
@@ -1046,6 +1060,9 @@ func (lp *Loadpoint) publishTimer(name string, delay time.Duration, action strin
 	timer := lp.pvTimer
 	if name == phaseTimer {
 		timer = lp.phaseTimer
+	}
+	if name == guardTimer {
+		timer = lp.guardUpdated
 	}
 
 	remaining := delay - lp.clock.Since(timer)
@@ -1275,7 +1292,7 @@ func (lp *Loadpoint) publishChargeProgress() {
 		// workaround for Go-E resetting during disconnect, see
 		// https://github.com/evcc-io/evcc/issues/5092
 		if f > 0 {
-			lp.setChargedEnergy(1e3 * f) // convert to Wh
+			lp.setChargedEnergy(1e3 * (f - lp.chargedAtStartup)) // convert to Wh
 		}
 	} else {
 		lp.log.ERROR.Printf("charge rater: %v", err)
@@ -1401,6 +1418,14 @@ func (lp *Loadpoint) publishSocAndRange() {
 	}
 }
 
+func (lp *Loadpoint) elapseGuard() {
+	if lp.guardUpdated != elapsed {
+		lp.log.DEBUG.Print("charger: guard elapse")
+		lp.guardUpdated = elapsed
+		lp.publishTimer(guardTimer, 0, timerInactive)
+	}
+}
+
 // addTask adds a single task to the queue
 func (lp *Loadpoint) addTask(task func()) {
 	// test guard
@@ -1425,7 +1450,7 @@ func (lp *Loadpoint) processTasks() {
 }
 
 // Update is the main control function. It reevaluates meters and charger state
-func (lp *Loadpoint) Update(sitePower float64, batteryBuffered bool) {
+func (lp *Loadpoint) Update(sitePower float64, autoCharge, batteryBuffered bool) {
 	lp.processTasks()
 
 	mode := lp.GetMode()
@@ -1515,6 +1540,14 @@ func (lp *Loadpoint) Update(sitePower float64, batteryBuffered bool) {
 		lp.elapsePVTimer() // let PV mode disable immediately afterwards
 
 	case mode == api.ModeMinPV || mode == api.ModePV:
+		// cheap tariff
+		if autoCharge && lp.GetTargetTime().IsZero() {
+			err = lp.fastCharging()
+			lp.resetPhaseTimer()
+			lp.elapsePVTimer() // let PV mode disable immediately afterwards
+			break
+		}
+
 		targetCurrent := lp.pvMaxCurrent(mode, sitePower, batteryBuffered)
 
 		var required bool // false
