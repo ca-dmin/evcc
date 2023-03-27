@@ -1,11 +1,11 @@
 product:
-  brand: Huawei
-  description: SUN2000 via RS485 Modbus
+  brand: SofarSolar
+  description: HYD 5…20K-3PH
 render:
   - usage: grid
     default: |
       type: template
-      template: huawei-sun2000-rs485
+      template: sofarsolar-g3
       usage: grid      
 
       # RS485 via adapter (Modbus RTU)
@@ -26,9 +26,10 @@ render:
       id: 1
       host: 192.0.2.2 # Hostname
       port: 502 # Port
+      delay: 1s # Optional
     advanced: |
       type: template
-      template: huawei-sun2000-rs485
+      template: sofarsolar-g3
       usage: grid      
 
       # RS485 via adapter (Modbus RTU)
@@ -49,12 +50,12 @@ render:
       id: 1
       host: 192.0.2.2 # Hostname
       port: 502 # Port
-      storageunit: 1 # Optional
+      delay: 1s # Optional
       capacity: 50 # Akkukapazität in kWh # Optional
   - usage: pv
     default: |
       type: template
-      template: huawei-sun2000-rs485
+      template: sofarsolar-g3
       usage: pv      
 
       # RS485 via adapter (Modbus RTU)
@@ -75,9 +76,10 @@ render:
       id: 1
       host: 192.0.2.2 # Hostname
       port: 502 # Port
+      delay: 1s # Optional
     advanced: |
       type: template
-      template: huawei-sun2000-rs485
+      template: sofarsolar-g3
       usage: pv      
 
       # RS485 via adapter (Modbus RTU)
@@ -98,12 +100,12 @@ render:
       id: 1
       host: 192.0.2.2 # Hostname
       port: 502 # Port
-      storageunit: 1 # Optional
+      delay: 1s # Optional
       capacity: 50 # Akkukapazität in kWh # Optional
   - usage: battery
     default: |
       type: template
-      template: huawei-sun2000-rs485
+      template: sofarsolar-g3
       usage: battery      
 
       # RS485 via adapter (Modbus RTU)
@@ -124,9 +126,10 @@ render:
       id: 1
       host: 192.0.2.2 # Hostname
       port: 502 # Port
+      delay: 1s # Optional
     advanced: |
       type: template
-      template: huawei-sun2000-rs485
+      template: sofarsolar-g3
       usage: battery      
 
       # RS485 via adapter (Modbus RTU)
@@ -147,5 +150,5 @@ render:
       id: 1
       host: 192.0.2.2 # Hostname
       port: 502 # Port
-      storageunit: 1 # Optional
+      delay: 1s # Optional
       capacity: 50 # Akkukapazität in kWh # Optional
