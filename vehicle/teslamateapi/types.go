@@ -1,4 +1,4 @@
-package teslamate
+package teslamateapi
 
 // from  https://github.com/tobiasehlert/teslamateapi/blob/main/src/v1_TeslaMateAPICars.go
 // changes:

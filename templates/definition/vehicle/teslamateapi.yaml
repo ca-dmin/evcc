@@ -1,4 +1,4 @@
-template: teslamate
+template: teslamateapi
 products:
   - brand: Tesla
 requirements:
@@ -30,7 +30,7 @@ params:
     advanced: true
   - preset: vehicle-identify
 render: |
-  type: teslamate
+  type: teslamateapi
   {{- if ne .title "" }}
   title: {{ .title }}
   {{- end }}

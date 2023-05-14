@@ -1,4 +1,4 @@
-package teslamate
+package teslamateapi
 
 import (
 	"time"

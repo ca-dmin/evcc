@@ -5,21 +5,21 @@ import (
 
 	"github.com/evcc-io/evcc/api"
 	"github.com/evcc-io/evcc/util"
-	"github.com/evcc-io/evcc/vehicle/teslamate"
+	"github.com/evcc-io/evcc/vehicle/teslamateapi"
 )
 
-// Teslamate is an api.Vehicle implementation for Tesla cars
-type Teslamate struct {
+// Teslamateapi is an api.Vehicle implementation for Tesla cars
+type Teslamateapi struct {
 	*embed
-	*teslamate.Provider
+	*teslamateapi.Provider
 }
 
 func init() {
-	registry.Add("teslamate", NewTeslamateFromConfig)
+	registry.Add("teslamateapi", NewTeslamateapiFromConfig)
 }
 
-// NewTeslamateFromConfig creates a new vehicle
-func NewTeslamateFromConfig(other map[string]interface{}) (api.Vehicle, error) {
+// NewTeslamateapiFromConfig creates a new vehicle
+func NewTeslamateapiFromConfig(other map[string]interface{}) (api.Vehicle, error) {
 	cc := struct {
 		embed              `mapstructure:",squash"`
 		Token, VIN, ApiURI string
@@ -32,7 +32,7 @@ func NewTeslamateFromConfig(other map[string]interface{}) (api.Vehicle, error) {
 		return nil, err
 	}
 
-	log := util.NewLogger("teslamate").Redact(cc.Token, cc.VIN)
+	log := util.NewLogger("teslamateapi").Redact(cc.Token, cc.VIN)
 
 	var err error
 
@@ -40,11 +40,11 @@ func NewTeslamateFromConfig(other map[string]interface{}) (api.Vehicle, error) {
 	// - MaxCurrent
 	// - StartCharge
 	// - StopCharge
-	api := teslamate.NewAPI(log, cc.ApiURI)
+	api := teslamateapi.NewAPI(log, cc.ApiURI)
 
 	vehicle, err := ensureVehicleEx(
 		cc.VIN, api.Vehicles,
-		func(v teslamate.Vehicle) string {
+		func(v teslamateapi.Vehicle) string {
 			return v.CarDetails.Vin
 		},
 	)
@@ -53,9 +53,9 @@ func NewTeslamateFromConfig(other map[string]interface{}) (api.Vehicle, error) {
 		return nil, err
 	}
 
-	v := &Teslamate{
+	v := &Teslamateapi{
 		embed:    &cc.embed,
-		Provider: teslamate.NewProvider(api, vehicle.CarID, cc.Cache),
+		Provider: teslamateapi.NewProvider(api, vehicle.CarID, cc.Cache),
 	}
 
 	if v.Title_ == "" {
