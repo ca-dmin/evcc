@@ -1,24 +1,20 @@
 product:
-  description: Tronity
+  description: ISO15118
   group: Generische Unterstützung
-requirements: ["sponsorship"]
+capabilities: ["iso151182"]
+description: |
+  Nur unterstützt wenn das Fahrzeug den Ladestand (Soc) an die verbundene Wallbox übermitteln kann.
 render:
   - default: |
       type: template
-      template: tronity
+      template: iso15118
       title: # Wird in der Benutzeroberfläche angezeigt (Optional)
-      clientid: # Einrichtung unter https://app.tronity.tech
-      clientsecret: # Einrichtung unter https://app.tronity.tech
-      vin: W... # Erforderlich, wenn mehrere Fahrzeuge des Herstellers vorhanden sind (Optional)
-      capacity: 10 # Akkukapazität in kWh (Optional)
+      capacity: 50 # Akkukapazität in kWh (Optional)
     advanced: |
       type: template
-      template: tronity
+      template: iso15118
       title: # Wird in der Benutzeroberfläche angezeigt (Optional)
-      clientid: # Einrichtung unter https://app.tronity.tech
-      clientsecret: # Einrichtung unter https://app.tronity.tech
-      vin: W... # Erforderlich, wenn mehrere Fahrzeuge des Herstellers vorhanden sind (Optional)
-      capacity: 10 # Akkukapazität in kWh (Optional)
+      capacity: 50 # Akkukapazität in kWh (Optional)
       phases: 3 # Die maximale Anzahl der Phasen welche genutzt werden können (Optional)
       icon: car # Icon in der Benutzeroberfläche (Optional)
       mode: # Möglich sind Off, Now, MinPV und PV, oder leer wenn keiner definiert werden soll (Optional)
