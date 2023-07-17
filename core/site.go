@@ -113,7 +113,7 @@ func NewSiteFromConfig(
 	site.loadpoints = loadpoints
 	site.tariffs = tariffs
 	site.coordinator = coordinator.New(log, vehicles)
-	site.prioritizer = prioritizer.New()
+	site.prioritizer = prioritizer.New(log)
 	site.savings = NewSavings(tariffs)
 
 	site.restoreSettings()
@@ -715,6 +715,8 @@ func (site *Site) update(lp Updater) {
 		site.publish("homePower", homePower)
 
 		site.Health.Update()
+	} else {
+		site.log.ERROR.Println(err)
 	}
 
 	site.publishTariffs()
@@ -791,6 +793,10 @@ func (site *Site) loopLoadpoints(next chan<- Updater) {
 // updating measurements and executing control logic.
 func (site *Site) Run(stopC chan struct{}, interval time.Duration) {
 	site.Health = NewHealth(time.Minute + interval)
+
+	if max := 30 * time.Second; interval < max {
+		site.log.WARN.Printf("interval <%.0fs can lead to unexpected behavior, see https://docs.evcc.io/docs/reference/configuration/interval", max.Seconds())
+	}
 
 	loadpointChan := make(chan Updater)
 	go site.loopLoadpoints(loadpointChan)
