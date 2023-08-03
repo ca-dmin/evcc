@@ -61,14 +61,14 @@ func (v *Identity) Login(user, password string) (oauth2.TokenSource, error) {
 		return nil, err
 	}
 
-	var token oauth.Token
-	if err := v.DoJSON(req, &token); err != nil {
+	var tok oauth.Token
+	if err := v.DoJSON(req, &tok); err != nil {
 		return nil, err
 	}
 
-	oauthToken := (*oauth2.Token)(&token)
-	ts := oauth2.ReuseTokenSourceWithExpiry(oauthToken, oauth.RefreshTokenSource(oauthToken, v), 15*time.Minute)
-	go oauth.Refresh(v.log, oauthToken, ts)
+	token := (*oauth2.Token)(&tok)
+	ts := oauth2.ReuseTokenSourceWithExpiry(token, oauth.RefreshTokenSource(token, v), 15*time.Minute)
+	go oauth.Refresh(v.log, token, ts)
 
 	return ts, nil
 }
@@ -88,8 +88,10 @@ func (v *Identity) RefreshToken(token *oauth2.Token) (*oauth2.Token, error) {
 		return nil, err
 	}
 
-	var res oauth2.Token
-	err = v.DoJSON(req, &res)
+	var res oauth.Token
+	if err := v.DoJSON(req, &res); err != nil {
+		return nil, err
+	}
 
-	return &res, err
+	return (*oauth2.Token)(&res), err
 }

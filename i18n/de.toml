@@ -65,7 +65,7 @@ optInMoreDetailsLink = "hier"
 optInSponsorship = "Sponsoring erforderlich."
 
 [footer.version]
-availableLong = "Neue Version verfügbar"
+availableLong = "neue Version verfügbar"
 modalCancel = "Abbrechen"
 modalDownload = "Download"
 modalInstalledVersion = "Installierte Version"
@@ -106,7 +106,7 @@ modalTitle = "Hilfe benötigt?"
 primaryActions = "Funktioniert etwas nicht so, wie es soll? Dies sind gute Anlaufstellen, um Hilfe zu erhalten."
 restartButton = "Neu starten"
 restartDescription = "Schon versucht, das Gerät aus- und wieder einzuschalten?"
-secondaryActions = "Noch keine Lösung gefunden? Hier noch ein paar weitere Möglichkeiten."
+secondaryActions = "Noch keine Lösung gefunden? Hier sind noch ein paar weitere Möglichkeiten."
 
 [help.restart]
 cancel = "Abbrechen"
@@ -169,7 +169,7 @@ label = "Max. Ladestrom"
 label = "Min. Ladestrom"
 
 [main.loadpointSettings.minSoc]
-description = "Reichweite für Notfälle. Fahrzeug wird im PV-Modus „schnell“ auf {0}% geladen. Danach weiter mit PV-Überschuss."
+description = "Fahrzeug wird im PV-Modus „schnell“ auf {0}% geladen. Danach weiter mit PV-Überschuss. Nützlich, um auch an dunklen Tagen eine Mindestreichweite zu gewährleisten."
 label = "Min. Ladung %"
 
 [main.loadpointSettings.phasesConfigured]
@@ -197,6 +197,7 @@ costLimitIgnore = "Die eingestellte {limit} wird in diesem Zeitraum ignoriert."
 descriptionEnergy = "Bis wann sollen {targetEnergy} ins Fahrzeug geladen sein?"
 descriptionSoc = "Wann soll das Fahrzeug auf {targetSoc}% geladen sein?"
 inactiveLabel = "Zielzeit"
+onlyInPvMode = "Ladeplanung ist nur im PV-Modus aktiv."
 planDuration = "Ladezeit"
 planPeriodLabel = "Zeitraum"
 planPeriodValue = "{start} bis {end}"
@@ -204,6 +205,7 @@ planUnknown = "noch unbekannt"
 priceLimit = "Preisgrenze von {price}"
 remove = "Entfernen"
 setTargetTime = "keine"
+targetEnergyRequired = "Damit die Ladeplanung funktioniert muss ein Ladeziel gesetzt sein."
 targetIsInThePast = "Wähle einen Zeitpunkt in der Zukunft, Marty."
 targetIsTooFarInTheFuture = "Wir passen den Plan an, sobald wir mehr über die Zukunft wissen."
 title = "Zielzeit"
@@ -296,6 +298,7 @@ price = "Σ Preis"
 reallyDelete = "Möchtest du diesen Ladevorgang wirklich löschen?"
 solar = "Sonne"
 title = "Ladevorgänge"
+total = "Insgesamt"
 vehicle = "Fahrzeug"
 
 [sessions.csv]
