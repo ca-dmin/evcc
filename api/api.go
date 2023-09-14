@@ -42,23 +42,31 @@ const (
 	StatusF    ChargeStatus = "F" // Fzg. angeschlossen:   ja    Laden aktiv: nein    Fehler EVSE oder Abstecken simulieren (CP-Wake-up, -12V)
 )
 
+var StatusEasA = map[ChargeStatus]ChargeStatus{StatusE: StatusA}
+
 // ChargeStatusString converts a string to ChargeStatus
-func ChargeStatusString(s string) (ChargeStatus, error) {
-	status := strings.ToUpper(s)
-	switch s1 := status[:1]; s1 {
+func ChargeStatusString(status string) (ChargeStatus, error) {
+	s := strings.ToUpper(strings.Trim(status, "\x00 "))
+
+	if len(s) == 0 {
+		return StatusNone, fmt.Errorf("invalid status: %s", status)
+	}
+
+	switch s1 := s[:1]; s1 {
 	case "A", "B":
 		return ChargeStatus(s1), nil
+
 	case "C", "D":
-		switch status {
-		case "C1", "D1":
+		if s == "C1" || s == "D1" {
 			return StatusB, nil
-		default:
-			return StatusC, nil
 		}
+		return StatusC, nil
+
 	case "E", "F":
-		return ChargeStatus(s1), fmt.Errorf("invalid status: %s", status)
+		return ChargeStatus(s1), fmt.Errorf("invalid status: %s", s)
+
 	default:
-		return StatusNone, fmt.Errorf("invalid status: %s", s)
+		return StatusNone, fmt.Errorf("invalid status: %s", status)
 	}
 }
 

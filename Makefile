@@ -10,7 +10,7 @@ VERSION := $(if $(TAG_NAME),$(TAG_NAME),$(SHA))
 BUILD_DATE := $(shell date -u '+%Y-%m-%d_%H:%M:%S')
 BUILD_TAGS := -tags=release
 LD_FLAGS := -X github.com/evcc-io/evcc/server.Version=$(VERSION) -X github.com/evcc-io/evcc/server.Commit=$(COMMIT) -s -w
-BUILD_ARGS := -ldflags='$(LD_FLAGS)'
+BUILD_ARGS := -trimpath -ldflags='$(LD_FLAGS)'
 
 # docker
 DOCKER_IMAGE := evcc/evcc
@@ -35,7 +35,7 @@ clean::
 	rm -rf dist/
 
 install::
-	go install $$(go list -f '{{join .Imports " "}}' tools.go)
+	go install $$(go list -e -f '{{join .Imports " "}}' tools.go)
 
 install-ui::
 	npm ci
@@ -58,7 +58,7 @@ lint-ui::
 test-ui::
 	npm test
 
-toml:
+toml::
 	go run packaging/toml.go
 
 test::
@@ -74,7 +74,7 @@ build::
 	@echo Version: $(VERSION) $(SHA) $(BUILD_DATE)
 	CGO_ENABLED=0 go build -v $(BUILD_TAGS) $(BUILD_ARGS)
 
-snapshot:
+snapshot::
 	goreleaser --snapshot --skip-publish --clean
 
 release::

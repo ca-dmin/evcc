@@ -78,72 +78,7 @@
 				:value="fmtEnergy(chargedEnergy)"
 				align="center"
 			/>
-			<div class="sessionInfo" @click="nextSessionInfo">
-				<LabelAndValue
-					v-if="sessionInfo === SESSION.SOLAR"
-					:label="$t('main.loadpoint.solar')"
-					:value="sessionSolarPercentage"
-					:valueFmt="fmtSolar"
-					align="end"
-				/>
-				<div v-else-if="sessionInfo === SESSION.AVG_PRICE">
-					<LabelAndValue
-						class="d-block d-sm-none"
-						:label="$t('main.loadpoint.avgPrice')"
-						:value="sessionPricePerKWh"
-						:valueFmt="fmtAvgPriceShort"
-						align="end"
-					/>
-					<LabelAndValue
-						class="d-none d-sm-block"
-						:label="$t('main.loadpoint.avgPrice')"
-						:value="sessionPricePerKWh"
-						:valueFmt="fmtAvgPrice"
-						align="end"
-					/>
-				</div>
-				<LabelAndValue
-					v-else-if="sessionInfo === SESSION.PRICE"
-					:label="$t('main.loadpoint.price')"
-					:value="sessionPrice"
-					:valueFmt="fmtPrice"
-					align="end"
-				/>
-				<div v-else-if="sessionInfo === SESSION.CO2">
-					<LabelAndValue
-						class="d-block d-sm-none"
-						:label="$t('main.loadpoint.co2')"
-						:value="sessionCo2PerKWh"
-						:valueFmt="fmtCo2Short"
-						align="end"
-					/>
-					<LabelAndValue
-						class="d-none d-sm-block"
-						:label="$t('main.loadpoint.co2')"
-						:value="sessionCo2PerKWh"
-						:valueFmt="fmtCo2Medium"
-						align="end"
-					/>
-				</div>
-				<LabelAndValue
-					v-else-if="chargeRemainingDurationInterpolated"
-					:label="$t('main.loadpoint.remaining')"
-					:value="`
-						${fmtShortDuration(chargeRemainingDurationInterpolated)}
-						${fmtShortDurationUnit(chargeRemainingDurationInterpolated, true)}
-					`"
-					align="end"
-				/>
-				<LabelAndValue
-					v-else
-					:label="$t('main.loadpoint.duration')"
-					:value="`
-						${fmtShortDuration(chargeDurationInterpolated)}
-						${fmtShortDurationUnit(chargeDurationInterpolated)}
-					`"
-					align="end"
-				/>
-			</div>
+			<LoadpointSessionInfo v-bind="sessionInfoProps" />
 		</div>
 		<hr class="divider" />
 		<Vehicle
@@ -173,7 +108,7 @@ import collector from "../mixins/collector";
 import LoadpointSettingsButton from "./LoadpointSettingsButton.vue";
 import LoadpointSettingsModal from "./LoadpointSettingsModal.vue";
 import VehicleIcon from "./VehicleIcon";
-import { getSessionInfo, setSessionInfo, SESSION } from "../sessionInfo";
+import LoadpointSessionInfo from "./LoadpointSessionInfo.vue";
 
 export default {
 	name: "Loadpoint",
@@ -184,6 +119,7 @@ export default {
 		LabelAndValue,
 		LoadpointSettingsButton,
 		LoadpointSettingsModal,
+		LoadpointSessionInfo,
 		VehicleIcon,
 	},
 	mixins: [formatter, collector],
@@ -210,6 +146,7 @@ export default {
 
 		// charger
 		chargerFeatureIntegratedDevice: Boolean,
+		chargerFeatureHeating: Boolean,
 		chargerIcon: String,
 
 		// vehicle
@@ -243,9 +180,9 @@ export default {
 		// other information
 		phases: Number,
 		phasesConfigured: Number,
+		phasesActive: Number,
 		minCurrent: Number,
 		maxCurrent: Number,
-		phasesActive: Number,
 		chargeCurrent: Number,
 		connectedDuration: Number,
 		chargeCurrents: Array,
@@ -270,16 +207,20 @@ export default {
 			guardRemainingInterpolated: this.guardRemaining,
 			chargeDurationInterpolated: this.chargeDuration,
 			chargeRemainingDurationInterpolated: this.chargeRemainingDuration,
-			sessionInfo: getSessionInfo(this.id),
-			SESSION,
 		};
 	},
 	computed: {
 		integratedDevice: function () {
 			return this.chargerFeatureIntegratedDevice;
 		},
+		heating: function () {
+			return this.chargerFeatureHeating;
+		},
 		phasesProps: function () {
 			return this.collectProps(Phases);
+		},
+		sessionInfoProps: function () {
+			return this.collectProps(LoadpointSessionInfo);
 		},
 		settingsModal: function () {
 			return this.collectProps(LoadpointSettingsModal);
@@ -295,17 +236,6 @@ export default {
 		},
 		socBasedCharging: function () {
 			return (!this.vehicleFeatureOffline && this.vehiclePresent) || this.vehicleSoc > 0;
-		},
-		sessionOptions: function () {
-			const result = [SESSION.TIME, SESSION.SOLAR];
-			if (this.currency) {
-				result.push(SESSION.PRICE);
-				result.push(SESSION.AVG_PRICE);
-			}
-			if (this.tariffCo2 > 0 || this.sessionCo2PerKWh > 0) {
-				result.push(SESSION.CO2);
-			}
-			return result;
 		},
 	},
 	watch: {
@@ -393,25 +323,6 @@ export default {
 			const inKw = value == 0 || value >= 1000;
 			return this.fmtKWh(value, inKw);
 		},
-		fmtPrice(value) {
-			return `${this.fmtMoney(value, this.currency)} ${this.fmtCurrencySymbol(
-				this.currency
-			)}`;
-		},
-		fmtAvgPrice(value) {
-			return this.fmtPricePerKWh(value, this.currency, false);
-		},
-		fmtAvgPriceShort(value) {
-			return this.fmtPricePerKWh(value, this.currency, true);
-		},
-		fmtSolar(value) {
-			return `${this.fmtNumber(value, 1)}%`;
-		},
-		nextSessionInfo() {
-			const index = this.sessionOptions.indexOf(this.sessionInfo);
-			this.sessionInfo = this.sessionOptions[index + 1] || this.sessionOptions[0];
-			setSessionInfo(this.id, this.sessionInfo);
-		},
 	},
 };
 </script>
@@ -450,9 +361,5 @@ export default {
 	.divider {
 		margin: 0 -1.5rem;
 	}
-}
-.sessionInfo {
-	cursor: pointer;
-	user-select: none;
 }
 </style>

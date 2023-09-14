@@ -119,9 +119,9 @@ func NewSalia(uri string, cache time.Duration) (api.Charger, error) {
 func (wb *Salia) heartbeat() {
 	bo := backoff.NewExponentialBackOff()
 	bo.InitialInterval = 5 * time.Second
-	bo.MaxElapsedTime = time.Minute
+	bo.MaxInterval = time.Minute
 
-	for ; true; <-time.Tick(30 * time.Second) {
+	for range time.Tick(30 * time.Second) {
 		if err := backoff.Retry(func() error {
 			return wb.post(salia.HeartBeat, "alive")
 		}, bo); err != nil {

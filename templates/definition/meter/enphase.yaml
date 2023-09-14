@@ -3,6 +3,10 @@ products:
   - brand: Enphase
     description:
       generic: IQ Envoy
+requirements:
+  description:
+    de: 'Als Batteriespeicher werden seitens der Enphase-API derzeit nur die Batterien vom Typ "AC Battery" unterstützt.'
+    en: 'Only batteries of type "AC Battery" are currently supported by Enphase-API.'
 params:
   - name: usage
     choice: ["grid", "pv", "battery"]
@@ -28,18 +32,6 @@ render: |
     insecure: true
     {{- end }}
     jq: .consumption[] | select(.measurementType == "net-consumption").wNow
-  energy:
-    source: http
-    uri: http://{{ .host }}/production.json
-    method: GET
-    {{- if .token }}
-    auth:
-      type: bearer
-      password: {{ .token }}
-    insecure: true
-    {{- end }}
-    jq: .consumption[] | select(.measurementType == "net-consumption").whLifetime
-    scale: 0.001
   {{- end }}
   {{- if eq .usage "pv" }}
   power:
@@ -69,7 +61,7 @@ render: |
   {{- if eq .usage "battery" }}
   power:
     source: http
-    uri: http://{{ .host }}/production.json?details=1
+    uri: http://{{ .host }}/production.json
     method: GET
     {{- if .token }}
     auth:
@@ -77,7 +69,7 @@ render: |
       password: {{ .token }}
     insecure: true
     {{- end }}
-    jq: .storage[] | select(.type == "acb").wNow
+    jq: .storage[] | .wNow
   soc:
     source: http
     uri: http://{{ .host }}/ivp/ensemble/inventory

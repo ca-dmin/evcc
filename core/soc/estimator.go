@@ -2,7 +2,6 @@ package soc
 
 import (
 	"errors"
-	"math"
 	"time"
 
 	"github.com/evcc-io/evcc/api"
@@ -80,13 +79,12 @@ func (s *Estimator) RemainingChargeDuration(targetSoc int, chargePower float64) 
 
 	// Zeit von vehicleSoc bis Reduktionspunkt (linear)
 	if s.vehicleSoc < rrp {
-		t1 = (math.Min(float64(targetSoc), rrp) - s.vehicleSoc) / minChargeSoc * s.virtualCapacity / chargePower
+		t1 = (min(float64(targetSoc), rrp) - s.vehicleSoc) / minChargeSoc * s.virtualCapacity / chargePower
 	}
 
 	// Zeit von Reduktionspunkt bis targetSoc (degressiv)
 	if float64(targetSoc) > rrp {
-		t2 = (float64(targetSoc) - math.Max(s.vehicleSoc, rrp)) / minChargeSoc * s.virtualCapacity / ((chargePower-s.minChargePower)/2 + s.minChargePower)
-
+		t2 = (float64(targetSoc) - max(s.vehicleSoc, rrp)) / minChargeSoc * s.virtualCapacity / ((chargePower-s.minChargePower)/2 + s.minChargePower)
 	}
 
 	return time.Duration(float64(time.Hour) * (t1 + t2)).Round(time.Second)
@@ -109,7 +107,7 @@ func (s *Estimator) Soc(chargedEnergy float64) (float64, error) {
 	var fetchedSoc *float64
 
 	if charger, ok := s.charger.(api.Battery); ok {
-		f, err := charger.Soc()
+		f, err := Guard(charger.Soc())
 
 		// if the charger does or could provide Soc, we always use it instead of using the vehicle API
 		if err == nil || !errors.Is(err, api.ErrNotAvailable) {
@@ -130,7 +128,7 @@ func (s *Estimator) Soc(chargedEnergy float64) (float64, error) {
 	}
 
 	if fetchedSoc == nil {
-		f, err := s.vehicle.Soc()
+		f, err := Guard(s.vehicle.Soc())
 		if err != nil {
 			// required for online APIs with refreshkey
 			if errors.Is(err, api.ErrMustRetry) {
@@ -153,7 +151,7 @@ func (s *Estimator) Soc(chargedEnergy float64) (float64, error) {
 
 	if s.estimate && s.virtualCapacity > 0 {
 		socDelta := s.vehicleSoc - s.prevSoc
-		energyDelta := math.Max(chargedEnergy, 0) - s.prevChargedEnergy
+		energyDelta := max(chargedEnergy, 0) - s.prevChargedEnergy
 
 		if socDelta != 0 || energyDelta < 0 { // soc value change or unexpected energy reset
 			// compare ChargeState of vehicle and charger
@@ -191,10 +189,10 @@ func (s *Estimator) Soc(chargedEnergy float64) (float64, error) {
 			}
 
 			// sample charged energy at soc change, reset energy delta
-			s.prevChargedEnergy = math.Max(chargedEnergy, 0)
+			s.prevChargedEnergy = max(chargedEnergy, 0)
 			s.prevSoc = s.vehicleSoc
 		} else {
-			s.vehicleSoc = math.Min(*fetchedSoc+energyDelta/s.energyPerSocStep, 100)
+			s.vehicleSoc = min(*fetchedSoc+energyDelta/s.energyPerSocStep, 100)
 			s.log.DEBUG.Printf("soc estimated: %.2f%% (vehicle: %.2f%%)", s.vehicleSoc, *fetchedSoc)
 		}
 	}

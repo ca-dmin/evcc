@@ -18,6 +18,39 @@ low = "kiedy nieco pełny"
 medium = "kiedy w połowie pełny"
 never = "tylko z wystarczającą nadwyżką"
 
+[config]
+
+[config.form]
+example = "Przykład"
+optional = "opcjonalny"
+
+[config.main]
+addVehicle = "Dodaj pojazd"
+edit = "edytować"
+title = "Konfiguracja"
+vehicles = "Moje pojazdy"
+
+[config.validation]
+failed = "nie udało się"
+label = "Status"
+running = "weryfikacja…"
+success = "udany"
+unknown = "nieznany"
+validate = "zweryfikować"
+
+[config.vehicle]
+cancel = "Anulować"
+delete = "Usuń samochód"
+generic = "Inne integracje"
+offline = "Samochód ogólny"
+online = "Pojazdy z API online"
+save = "Zapisz"
+scooter = "Skuter"
+template = "Producent"
+titleAdd = "Dodaj samochód"
+titleEdit = "Edytuj pojazd"
+validateSave = "Sprawdź i zapisz"
+
 [footer]
 
 [footer.community]
@@ -174,7 +207,7 @@ label = "Maks. prąd"
 label = "Min. Prąd"
 
 [main.loadpointSettings.minSoc]
-description = "Zasięg w sytuacjach awaryjnych. Pojazd jest „szybko” ładowany do {0}% w trybie „Słońce”. Następnie kontynuuje tylko z nadwyżką fotowoltaiczną."
+description = "Pojazd jest „szybko” ładowany do {0}% w trybie „Słońce”. Następnie kontynuuje tylko z nadwyżką fotowoltaiczną. Przydatne, aby zapewnić minimalny zasięg nawet w ciemniejsze dni."
 label = "Minimalne naładowanie %"
 
 [main.loadpointSettings.phasesConfigured]
@@ -204,6 +237,7 @@ descriptionEnergy = "Do kiedy należy załadować {targetEnergy} do pojazdu?"
 descriptionSoc = "Kiedy pojazd powinien zostać naladowany do {targetSoc}%?"
 inactiveLabel = "Czas docelowy"
 modalTitle = "Ustaw docelowy czas"
+onlyInPvMode = "Plan ładowania działa tylko w trybie solarnym."
 planDuration = "Czas ładowania"
 planPeriodLabel = "Okres"
 planPeriodValue = "{start} do {end}"
@@ -211,6 +245,7 @@ planUnknown = "jeszcze nie wiadomo"
 priceLimit = "limit ceny {cena}"
 remove = "Usuń"
 setTargetTime = "brak"
+targetEnergyRequired = "Musisz także ustawić limit energii."
 targetIsInThePast = "Wybierz czas w przyszłości."
 targetIsTooFarInTheFuture = "Dostosujemy plan, gdy tylko dowiemy się więcej o przyszłości."
 title = "Czas Docelowy"
@@ -237,6 +272,8 @@ fallbackName = "Pojazd"
 moreActions = "Więcej akcji"
 none = "Brak pojazdu"
 targetSoc = "Ograniczenie"
+temp = "Temp."
+tempLimit = " Ograniczenie temp."
 unknown = "Pojazd gościa"
 vehicleSoc = "Bateria"
 
@@ -290,7 +327,9 @@ started = "Zaczęło się"
 title = "Sesja ładowania"
 
 [sessions]
+avgPower = "⌀ Moc"
 avgPrice = "⌀ Cena"
+chargeDuration = "Czas trwania"
 co2 = "⌀ CO₂"
 csvMonth = "Pobierz plik {month} CSV"
 csvTotal = "Pobierz plik CSV"
@@ -360,7 +399,7 @@ mi = "mile"
 
 [startupError]
 configFile = "Używany plik konfiguracyjny:"
-configuration = "Konfiguracja"
+configuration = "Konfig"
 description = "Sprawdź swój plik konfiguracyjny. Jeśli komunikat o błędzie nie pomoże, zapoznaj się z naszym {0}."
 discussions = "Dyskusje GitHub"
 fixAndRestart = "Proszę rozwiązać problem i zrestartować serwer."
