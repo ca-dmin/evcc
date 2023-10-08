@@ -36,15 +36,15 @@ type Updater interface {
 // meterMeasurement is used as slice element for publishing structured data
 type meterMeasurement struct {
 	Power  float64 `json:"power"`
-	Energy float64 `json:"energy"`
+	Energy float64 `json:"energy,omitempty"`
 }
 
 // batteryMeasurement is used as slice element for publishing structured data
 type batteryMeasurement struct {
 	Power    float64 `json:"power"`
-	Energy   float64 `json:"energy"`
-	Soc      float64 `json:"soc"`
-	Capacity float64 `json:"capacity"`
+	Energy   float64 `json:"energy,omitempty"`
+	Soc      float64 `json:"soc,omitempty"`
+	Capacity float64 `json:"capacity,omitempty"`
 }
 
 // Site is the main configuration container. A site can host multiple loadpoints.
@@ -104,7 +104,6 @@ func NewSiteFromConfig(
 	log *util.Logger,
 	other map[string]interface{},
 	loadpoints []*Loadpoint,
-	vehicles []api.Vehicle,
 	tariffs tariff.Tariffs,
 ) (*Site, error) {
 	site := NewSite()
@@ -115,7 +114,10 @@ func NewSiteFromConfig(
 	Voltage = site.Voltage
 	site.loadpoints = loadpoints
 	site.tariffs = tariffs
-	site.coordinator = coordinator.New(log, vehicles)
+
+	site.coordinator = coordinator.New(log, config.Instances(config.Vehicles().Devices()))
+	config.Vehicles().Subscribe(site.updateVehicles)
+
 	site.prioritizer = prioritizer.New(log)
 	site.savings = NewSavings(tariffs)
 
@@ -184,7 +186,7 @@ func NewSiteFromConfig(
 	}
 
 	if len(site.batteryMeters) > 0 && site.ResidualPower <= 0 {
-		site.log.WARN.Println("battery configured but residualPower is missing (add residualPower: 100 to site)")
+		site.log.WARN.Println("battery configured but residualPower is missing or <= 0 (add residualPower: 100 to site), see https://docs.evcc.io/en/docs/reference/configuration/site#residualpower")
 	}
 
 	// auxiliary meters
@@ -483,30 +485,32 @@ func (site *Site) updateMeters() error {
 			}
 
 			// battery soc and capacity
-			var capacity float64
-			soc, err := soc.Guard(meter.(api.Battery).Soc())
+			var batSoc, capacity float64
+			if meter, ok := meter.(api.Battery); ok {
+				batSoc, err = soc.Guard(meter.Soc())
 
-			if err == nil {
-				// weigh soc by capacity and accumulate total capacity
-				weighedSoc := soc
-				if m, ok := meter.(api.BatteryCapacity); ok {
-					capacity = m.Capacity()
-					totalCapacity += capacity
-					weighedSoc *= capacity
-				}
+				if err == nil {
+					// weigh soc by capacity and accumulate total capacity
+					weighedSoc := batSoc
+					if m, ok := meter.(api.BatteryCapacity); ok {
+						capacity = m.Capacity()
+						totalCapacity += capacity
+						weighedSoc *= capacity
+					}
 
-				site.batterySoc += weighedSoc
-				if len(site.batteryMeters) > 1 {
-					site.log.DEBUG.Printf("battery %d soc: %.0f%%", i+1, soc)
+					site.batterySoc += weighedSoc
+					if len(site.batteryMeters) > 1 {
+						site.log.DEBUG.Printf("battery %d soc: %.0f%%", i+1, batSoc)
+					}
+				} else {
+					site.log.ERROR.Printf("battery %d soc: %v", i+1, err)
 				}
-			} else {
-				site.log.ERROR.Printf("battery %d soc: %v", i+1, err)
 			}
 
 			mm[i] = batteryMeasurement{
 				Power:    power,
 				Energy:   energy,
-				Soc:      soc,
+				Soc:      batSoc,
 				Capacity: capacity,
 			}
 		}

@@ -633,11 +633,11 @@ func configureSiteAndLoadpoints(conf globalConfig) (*core.Site, error) {
 		return nil, err
 	}
 
-	return configureSite(conf.Site, loadpoints, config.Instances(config.Vehicles().Devices()), tariffs)
+	return configureSite(conf.Site, loadpoints, tariffs)
 }
 
-func configureSite(conf map[string]interface{}, loadpoints []*core.Loadpoint, vehicles []api.Vehicle, tariffs tariff.Tariffs) (*core.Site, error) {
-	site, err := core.NewSiteFromConfig(log, conf, loadpoints, vehicles, tariffs)
+func configureSite(conf map[string]interface{}, loadpoints []*core.Loadpoint, tariffs tariff.Tariffs) (*core.Site, error) {
+	site, err := core.NewSiteFromConfig(log, conf, loadpoints, tariffs)
 	if err != nil {
 		return nil, fmt.Errorf("failed configuring site: %w", err)
 	}
@@ -657,7 +657,7 @@ func configureLoadpoints(conf globalConfig) (loadpoints []*core.Loadpoint, err e
 			return nil, fmt.Errorf("failed decoding loadpoint configuration: %w", err)
 		}
 
-		log := util.NewLogger("lp-" + strconv.Itoa(id+1))
+		log := util.NewLoggerWithLoadpoint("lp-"+strconv.Itoa(id+1), id+1)
 		lp, err := core.NewLoadpointFromConfig(log, lpc)
 		if err != nil {
 			return nil, fmt.Errorf("failed configuring loadpoint: %w", err)
