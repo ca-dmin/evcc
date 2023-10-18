@@ -153,7 +153,7 @@ type Loadpoint struct {
 	planner     *planner.Planner
 	targetTime  time.Time // time goal
 	planSlotEnd time.Time // current plan slot end time
-	planActive  bool      // plan is active
+	planActive  bool      // charge plan exists and has a currently active slot
 
 	// cached state
 	status         api.ChargeStatus       // Charger status
@@ -685,8 +685,8 @@ func (lp *Loadpoint) syncCharger() error {
 		// ignore disabled state if vehicle was disconnected ^(lp.enabled && ^lp.connected)
 		if lp.guardGracePeriodElapsed() && lp.phaseSwitchCompleted() && (enabled || lp.connected()) {
 			lp.log.WARN.Printf("charger out of sync: expected %vd, got %vd", status[lp.enabled], status[enabled])
+			lp.elapseGuard()
 		}
-		lp.elapseGuard()
 		return nil
 	}
 

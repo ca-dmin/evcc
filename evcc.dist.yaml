@@ -95,7 +95,7 @@ vehicles:
     vin: WREN...
     onIdentify: # set defaults when vehicle is identified
       mode: pv # enable PV-charging when vehicle is identified
-      minSoc: 20 # immediately charge to 0% regardless of mode unless "off" (disabled)
+      minSoc: 20 # immediately charge to 20% regardless of mode unless "off" (disabled)
       targetSoc: 90 # limit charge to 90%
 
 # site describes the EVU connection, PV and home battery
@@ -194,6 +194,13 @@ tariffs:
     # securitytoken: # api token
     # charges: # optional, additional charges per kWh
     # tax: # optional, additional tax (0.1 for 10%)
+
+    # type: custom # price from a plugin source; see https://docs.evcc.io/docs/reference/plugins
+    # price:
+    #   source: http
+    #   uri: https://example.org/price.json
+    #   jq: .price.current
+
   feedin:
     # rate for feeding excess (pv) energy to the grid
     type: fixed
