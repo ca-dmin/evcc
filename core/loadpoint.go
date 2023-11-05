@@ -175,7 +175,7 @@ type Loadpoint struct {
 	progress                *Progress      // Step-wise progress indicator
 
 	// session log
-	db      session.Database
+	db      *session.DB
 	session *session.Session
 
 	tasks *util.Queue[Task] // tasks to be executed
@@ -584,6 +584,9 @@ func (lp *Loadpoint) Prepare(uiChan chan<- util.Param, pushChan chan<- push.Even
 	lp.publish(minCurrent, lp.MinCurrent)
 	lp.publish(maxCurrent, lp.MaxCurrent)
 
+	lp.publish("enableThreshold", lp.Enable.Threshold)
+	lp.publish("disableThreshold", lp.Disable.Threshold)
+
 	lp.setConfiguredPhases(lp.ConfiguredPhases)
 	lp.publish(phasesEnabled, lp.phases)
 	lp.publish(phasesActive, lp.activePhases())
@@ -602,6 +605,13 @@ func (lp *Loadpoint) Prepare(uiChan chan<- util.Param, pushChan chan<- push.Even
 	} else {
 		lp.publish(chargerIcon, nil)
 	}
+
+	// vehicle
+	lp.publish(vehiclePresent, false)
+	lp.publish(vehicleTitle, "")
+	lp.publish(vehicleIcon, "")
+	lp.publish(vehicleCapacity, 0.0)
+	lp.publish(vehicleOdometer, 0.0)
 
 	// assign and publish default vehicle
 	if lp.defaultVehicle != nil {
@@ -1558,6 +1568,9 @@ func (lp *Loadpoint) Update(sitePower float64, autoCharge, batteryBuffered, batt
 	mode := lp.GetMode()
 	lp.publish("mode", mode)
 
+	// update and publish plan without being short-circuited by modes etc.
+	plannerActive := lp.plannerActive()
+
 	// execute loading strategy
 	switch {
 	case !lp.connected():
@@ -1588,7 +1601,7 @@ func (lp *Loadpoint) Update(sitePower float64, autoCharge, batteryBuffered, batt
 		err = lp.fastCharging()
 
 	// minimum or target charging
-	case lp.minSocNotReached() || lp.plannerActive():
+	case lp.minSocNotReached() || plannerActive:
 		err = lp.fastCharging()
 		lp.resetPhaseTimer()
 		lp.elapsePVTimer() // let PV mode disable immediately afterwards
