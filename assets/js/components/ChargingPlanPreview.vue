@@ -1,9 +1,14 @@
 <template>
-	<div class="plan my-3">
+	<div class="plan">
 		<div class="justify-content-between mb-2 d-flex justify-content-between">
 			<div class="text-start">
 				<div class="label">{{ $t("main.targetChargePlan.chargeDuration") }}</div>
-				<div class="value text-primary">{{ planDuration }}</div>
+				<div class="value text-primary d-sm-flex align-items-baseline">
+					<div>{{ planDuration }}</div>
+					<div v-if="fmtPower" class="extraValue text-nowrap ms-sm-1">
+						{{ fmtPower }}
+					</div>
+				</div>
 			</div>
 			<div v-if="hasTariff" class="text-end">
 				<div class="label">
@@ -26,11 +31,12 @@ import { CO2_TYPE } from "../units";
 import TariffChart from "./TariffChart.vue";
 
 export default {
-	name: "TargetChargePlan",
+	name: "ChargingPlanPreview",
 	components: { TariffChart },
 	mixins: [formatter],
 	props: {
 		duration: Number,
+		power: Number,
 		rates: Array,
 		plan: Array,
 		smartCostType: String,
@@ -43,6 +49,12 @@ export default {
 	computed: {
 		planDuration() {
 			return this.fmtDuration(this.duration);
+		},
+		fmtPower() {
+			if (this.duration > 0 && this.power > 0) {
+				return `@ ${this.fmtKw(this.power)}`;
+			}
+			return null;
 		},
 		isCo2() {
 			return this.smartCostType === CO2_TYPE;
@@ -63,6 +75,9 @@ export default {
 			return hourSum ? priceSum / hourSum : undefined;
 		},
 		fmtAvgPrice() {
+			if (!this.targetTime) {
+				return "—";
+			}
 			let price = this.activeSlot ? this.activeSlot.price : this.avgPrice;
 			if (price === undefined) {
 				return this.$t("main.targetChargePlan.unknownPrice");
@@ -97,7 +112,7 @@ export default {
 				end.setHours(startHour + 1);
 				const endHour = end.getHours();
 				const day = this.weekdayShort(start);
-				const toLate = this.targetTime.getTime() <= start.getTime();
+				const toLate = this.targetTime && this.targetTime.getTime() <= start.getTime();
 				// TODO: handle multiple matching time slots
 				const price = this.findSlotInRange(start, end, rates)?.price;
 				const charging = this.findSlotInRange(start, end, plan) != null;
@@ -143,6 +158,10 @@ export default {
 .value {
 	font-size: 18px;
 	font-weight: bold;
+}
+.extraValue {
+	color: var(--evcc-gray);
+	font-size: 14px;
 }
 .label {
 	color: var(--evcc-gray);

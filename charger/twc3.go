@@ -55,7 +55,7 @@ type Vitals struct {
 	SessionEnergyWh   float64 `json:"session_energy_wh"`   // 22864.699
 	ConfigStatus      int     `json:"config_status"`       // 5
 	EvseState         int     `json:"evse_state"`          // 1
-	CurrentAlerts     []any   `json:"current_alerts"`      //[]
+	CurrentAlerts     []any   `json:"current_alerts"`      // []
 }
 
 // NewTwc3FromConfig creates a new vehicle
@@ -150,7 +150,7 @@ func (c *Twc3) MaxCurrent(current int64) error {
 		return errors.New("loadpoint not initialized")
 	}
 
-	v, ok := c.lp.GetVehicle().(api.CurrentLimiter)
+	v, ok := c.lp.GetVehicle().(api.CurrentController)
 	if !ok {
 		return errors.New("vehicle not capable of current control")
 	}
