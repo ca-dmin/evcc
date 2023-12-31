@@ -49,7 +49,7 @@ func NewEdfTempoFromConfig(other map[string]interface{}) (api.Tariff, error) {
 		return nil, err
 	}
 
-	if cc.ClientID == "" && cc.ClientSecret == "" {
+	if cc.ClientID == "" || cc.ClientSecret == "" {
 		return nil, errors.New("missing credentials")
 	}
 
@@ -131,8 +131,6 @@ func (t *EdfTempo) run(done chan error) {
 			continue
 		}
 
-		once.Do(func() { close(done) })
-
 		data := make(api.Rates, 0, 24*len(res.Data.Values))
 		for _, r := range res.Data.Values {
 			for ts := r.StartDate.Local(); ts.Before(r.EndDate); ts = ts.Add(time.Hour) {
@@ -147,6 +145,7 @@ func (t *EdfTempo) run(done chan error) {
 		data.Sort()
 
 		t.data.Set(data)
+		once.Do(func() { close(done) })
 	}
 }
 

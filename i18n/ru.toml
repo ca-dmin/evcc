@@ -1,3 +1,39 @@
+[batterySettings]
+batteryLevel = "Уровень заряда батареи"
+capacity = "{energy} из {total}"
+control = "Управление батареей"
+discharge = "Предотвратить разряд в быстром режиме и запланированной зарядке."
+disclaimerHint = "Примечание:"
+disclaimerText = "Эти настройки влияют только на режим солнечной батареи. Поведение зарядки изменяется соответствующе."
+legendBottomName = "домашний приоритет"
+legendBottomSubline = "не используется для зарядки"
+legendMiddleName = "сначала автомобиль"
+legendMiddleSubline = "дом вторым"
+legendTitle = "Как должна использоваться солнечная энергия?"
+legendTopAutostart = "запускается автоматически"
+legendTopName = "зарядка с поддержкой от аккумулятора"
+legendTopSubline = "без перебоев"
+modalTitle = "Настройки батареи"
+notControllable = "Управление батарей недоступно для этой батареи"
+
+[batterySettings.bufferStart]
+full = "когда почти полная"
+low = "когда около полная"
+medium = "когда на половину полная"
+never = "только при достаточном избытке"
+
+[config]
+
+[config.form]
+example = "Пример"
+optional = "опционально"
+
+[config.main]
+addVehicle = "Добавить транспортное средство"
+edit = "редактировать"
+title = "Конфигурация"
+vehicles = "Мои транспортные средства"
+
 [footer]
 
 [footer.community]
