@@ -12,19 +12,11 @@
 						{{ loadpointTitle }}
 					</div>
 				</h3>
-				<LoadpointSettingsButton
-					v-if="settingsButtonVisible"
-					:id="id"
-					class="d-block d-sm-none"
-				/>
+				<LoadpointSettingsButton :id="id" class="d-block d-sm-none" />
 			</div>
 			<div class="mb-3 d-flex align-items-center">
 				<Mode class="flex-grow-1" :mode="mode" @updated="setTargetMode" />
-				<LoadpointSettingsButton
-					v-if="settingsButtonVisible"
-					:id="id"
-					class="d-none d-sm-block ms-2"
-				/>
+				<LoadpointSettingsButton :id="id" class="d-none d-sm-block ms-2" />
 			</div>
 		</div>
 		<LoadpointSettingsModal
@@ -178,6 +170,8 @@ export default {
 		phases: Number,
 		phasesConfigured: Number,
 		phasesActive: Number,
+		chargerPhases1p3p: Boolean,
+		chargerPhysicalPhases: Number,
 		minCurrent: Number,
 		maxCurrent: Number,
 		chargeCurrent: Number,
@@ -188,8 +182,6 @@ export default {
 		phaseRemaining: Number,
 		pvRemaining: Number,
 		pvAction: String,
-		guardRemaining: Number,
-		guardAction: String,
 		smartCostLimit: Number,
 		smartCostType: String,
 		smartCostActive: Boolean,
@@ -202,7 +194,6 @@ export default {
 			tickerHandler: null,
 			phaseRemainingInterpolated: this.phaseRemaining,
 			pvRemainingInterpolated: this.pvRemaining,
-			guardRemainingInterpolated: this.guardRemaining,
 			chargeDurationInterpolated: this.chargeDuration,
 			chargeRemainingDurationInterpolated: this.chargeRemainingDuration,
 		};
@@ -232,9 +223,6 @@ export default {
 		settingsModal: function () {
 			return this.collectProps(LoadpointSettingsModal);
 		},
-		settingsButtonVisible: function () {
-			return this.$hiddenFeatures() || [0, 1, 3].includes(this.phasesConfigured);
-		},
 		vehicleProps: function () {
 			return this.collectProps(Vehicle);
 		},
@@ -261,9 +249,6 @@ export default {
 		pvRemaining() {
 			this.pvRemainingInterpolated = this.pvRemaining;
 		},
-		guardRemaining() {
-			this.guardRemainingInterpolated = this.guardRemaining;
-		},
 		chargeDuration() {
 			this.chargeDurationInterpolated = this.chargeDuration;
 		},
@@ -284,9 +269,6 @@ export default {
 			}
 			if (this.pvRemainingInterpolated > 0) {
 				this.pvRemainingInterpolated--;
-			}
-			if (this.guardRemainingInterpolated > 0) {
-				this.guardRemainingInterpolated--;
 			}
 			if (this.chargeDurationInterpolated > 0 && this.charging) {
 				this.chargeDurationInterpolated++;

@@ -218,7 +218,6 @@ solar = "Słoneczna"
 currents = "Prąd ładowania"
 default = "domyślny"
 disclaimerHint = "Uwaga:"
-disclaimerText = "Zmiany zostaną zresetowane po restarcie serwera."
 onlyForSocBasedCharging = "Opcje te są dostępne tylko dla pojazdów ze znanym poziomem naładowania."
 title = "Ustawienia {0}"
 vehicle = "Pojazd"
@@ -323,7 +322,6 @@ cleanEnergyCharging = "Ładowanie czystą energią: {co2} (ograniczenie {limit})
 climating = "Wykryto wstępne przygotowanie"
 connected = "Połączony."
 disconnected = "Rozłączony."
-guard = "Ochrona przełączania aktywna {remaining}…"
 minCharge = "Minimalne ładowanie do {soc}%."
 pvDisable = "Za mało nadwyżki. Pauza po {remaining}..."
 pvEnable = "Dostępna nadwyżka. Począwszy po {remaining}..."
@@ -394,7 +392,7 @@ allVehicles = "wszystkie pojazdy"
 filter = "Filtrować"
 
 [settings]
-title = "Ustawienia"
+title = "Ustawienia główne"
 
 [settings.gridDetails]
 co2 = "CO₂"
